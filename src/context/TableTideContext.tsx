@@ -31,6 +31,7 @@ interface TableTideContextType {
   setActiveReservationId: (id: string | null) => void;
   assignReservationToTable: (reservationId: string, tableOrGroupId: string | null) => void;
   autoAssignAll: () => void;
+  seatWalkIn: (tableOrGroupId: string, pax: number) => void;
   
   // Daily operations
   clearDay: () => void;
@@ -285,9 +286,44 @@ export const TableTideProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const updateReservation = useCallback((id: string, updates: Partial<Reservation>) => {
     setReservations((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, ...updates } : r))
+      prev.map((r) => {
+        if (r.id === id) {
+          const merged = { ...r, ...updates };
+          if (updates.status === 'Seated' && !r.seatedAtTimestamp) {
+            merged.seatedAtTimestamp = Date.now();
+          } else if (updates.status && updates.status !== 'Seated') {
+            delete merged.seatedAtTimestamp;
+          }
+          return merged;
+        }
+        return r;
+      })
     );
   }, []);
+
+  const seatWalkIn = useCallback((tableOrGroupId: string, pax: number) => {
+    const id = `res_walk_${Date.now()}`;
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    const newRes: Reservation = {
+      id,
+      guestName: 'Walk-in',
+      pax,
+      time: timeStr,
+      status: 'Seated',
+      tableId: tableOrGroupId,
+      seatedAtTimestamp: Date.now(),
+      date: activeDate,
+      notes: 'Walk-in Guest',
+    };
+    setReservations((prev) => [...prev, newRes]);
+
+    canvasConfetti({
+      particleCount: 50,
+      spread: 40,
+      origin: { y: 0.7 },
+      colors: ['#10b981', '#059669', '#34d399'],
+    });
+  }, [activeDate]);
 
   const deleteReservation = useCallback((id: string) => {
     setReservations((prev) => prev.filter((r) => r.id !== id));
@@ -467,6 +503,7 @@ export const TableTideProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setActiveReservationId,
         assignReservationToTable,
         autoAssignAll,
+        seatWalkIn,
         clearDay,
         changeDate,
       }}

@@ -4,6 +4,8 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Stage, Layer, Rect, Circle, Text, Group, Transformer, Line, Ellipse } from 'react-konva';
 import { useTableTide } from '../context/TableTideContext';
 import { Table, JoinedGroup, Reservation } from '../types';
+import { Clock, Users, X, AlertTriangle, Plus, CheckCircle2, User } from 'lucide-react';
+import canvasConfetti from 'canvas-confetti';
 
 interface FloorCanvasProps {
   readOnly?: boolean;
@@ -21,6 +23,8 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
     assignReservationToTable,
     updateTable,
     activeDate,
+    seatWalkIn,
+    updateReservation,
   } = useTableTide();
 
   const stageRef = useRef<any>(null);
@@ -29,6 +33,15 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
   
   // Track selected nodes for transformer
   const [selectedNodes, setSelectedNodes] = useState<any[]>([]);
+
+  // Periodic tick to force re-render of active timers every 10 seconds
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setTick((t) => t + 1), 10000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const [activeTableModal, setActiveTableModal] = useState<Table | null>(null);
 
   // Fluid responsive stage variables relative to the 1380px baseline coordinate blueprint
   const [dimensions, setDimensions] = useState({ width: 1380, height: 500 });
@@ -93,11 +106,23 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
         textColor = '#92400e';
         guestTextColor = '#0f172a';
       } else if (res.status === 'Seated') {
-        fill = '#f0fdf4'; // Soft emerald background
-        stroke = '#15803d'; // Thick Forest Green border
-        shadowColor = 'rgba(21, 128, 61, 0.2)';
-        textColor = '#166534';
-        guestTextColor = '#0f172a';
+        // Calculate elapsed time for red warning status (1 hour 45 minutes)
+        const elapsed = res.seatedAtTimestamp ? Math.floor((Date.now() - res.seatedAtTimestamp) / 60000) : 0;
+        const isWarning = elapsed >= 105;
+
+        if (isWarning) {
+          fill = '#fef2f2'; // Soft red background
+          stroke = '#dc2626'; // Bold crimson border
+          shadowColor = 'rgba(220, 38, 38, 0.45)'; // High-visibility red glowing aura for outdoor glare
+          textColor = '#991b1b'; // Deep red
+          guestTextColor = '#7f1d1d';
+        } else {
+          fill = '#f0fdf4'; // Soft emerald background
+          stroke = '#15803d'; // Thick Forest Green border
+          shadowColor = 'rgba(21, 128, 61, 0.2)';
+          textColor = '#166534';
+          guestTextColor = '#0f172a';
+        }
       } else if (res.status === 'Completed') {
         fill = '#f8fafc'; // Faint gray
         stroke = '#cbd5e1'; // Muted grey border
@@ -177,6 +202,8 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
           }
         } else {
           setSelectedTableIds([...group.tableIds]);
+          // Open quick walk-in or table operations modal
+          setActiveTableModal(table);
         }
       }
     } else {
@@ -188,6 +215,8 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
         }
       } else {
         setSelectedTableIds([targetId]);
+        // Open quick walk-in or table operations modal
+        setActiveTableModal(table);
       }
     }
   };
@@ -348,7 +377,10 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
                 {/* 2. Text Labels inside shape */}
                 <Group
                   x={0}
-                  y={isCircle ? table.width / 2 - (res ? 26 : 18) : table.height / 2 - (res ? 26 : 18)}
+                  y={isCircle 
+                    ? table.width / 2 - (res ? (res.status === 'Seated' ? 32 : 26) : 18) 
+                    : table.height / 2 - (res ? (res.status === 'Seated' ? 32 : 26) : 18)
+                  }
                   width={table.width}
                 >
                   {/* Table ID label (Thick dark text for sunlight readability) */}
@@ -382,12 +414,43 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
                       y={isCircle ? 32 : 36}
                       fontSize={isCircle ? 11 : 12}
                       fontFamily="Inter, system-ui"
-                      fill="#0f172a"
+                      fill={res.status === 'Seated' && res.seatedAtTimestamp && Math.floor((Date.now() - res.seatedAtTimestamp) / 60000) >= 105 ? '#991b1b' : '#0f172a'}
                       align="center"
                       fontStyle="bold"
                       ellipsis={true}
                     />
                   )}
+
+                  {/* Real-time countdown timer */}
+                  {res && res.status === 'Seated' && res.seatedAtTimestamp && (() => {
+                    const elapsed = Math.floor((Date.now() - res.seatedAtTimestamp) / 60000);
+                    const isStool = parseInt(table.id, 10) >= 10 && parseInt(table.id, 10) <= 15;
+                    const duration = isStool ? 90 : 120;
+                    const remaining = Math.max(0, duration - elapsed);
+                    const isWarning = elapsed >= 105;
+
+                    let tText = '';
+                    if (elapsed >= duration) {
+                      tText = `+${elapsed - duration}m`;
+                    } else {
+                      const hrs = Math.floor(remaining / 60);
+                      const mins = remaining % 60;
+                      tText = hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
+                    }
+
+                    return (
+                      <Text
+                        text={tText}
+                        width={table.width}
+                        y={isCircle ? 44 : 50}
+                        fontSize={isCircle ? 9 : 10}
+                        fontFamily="Inter, system-ui"
+                        fill={isWarning ? '#dc2626' : '#16a34a'}
+                        align="center"
+                        fontStyle="bold"
+                      />
+                    );
+                  })()}
                 </Group>
 
                 {/* Group locked icon overlay */}
@@ -535,6 +598,198 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
           Click any table (or joined group) to assign this cover booking
         </div>
       )}
+
+      {/* Walk-in & Table Operations Modal */}
+      {activeTableModal && (() => {
+        const modalRes = getTableReservation(activeTableModal);
+        const modalGroup = activeTableModal.parentId 
+          ? joinedGroups.find((g) => g.id === activeTableModal.parentId) 
+          : null;
+        
+        return (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl border border-zinc-200 shadow-2xl max-w-sm w-full overflow-hidden flex flex-col">
+              
+              {/* Header */}
+              <div className="p-5 border-b border-zinc-100 flex items-center justify-between bg-slate-50/50">
+                <div>
+                  <h3 className="text-md font-black text-slate-900 leading-tight">
+                    {modalGroup ? `Group: ${modalGroup.name}` : `Table ${activeTableModal.name}`}
+                  </h3>
+                  <p className="text-[10px] text-amber-700 uppercase tracking-widest font-mono font-extrabold mt-0.5">
+                    Capacity: {modalGroup ? modalGroup.capacity : activeTableModal.capacity} Pax
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setActiveTableModal(null)}
+                  className="p-1.5 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-700 transition"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="p-5">
+                {!modalRes ? (
+                  /* WALK-IN QUICK SEAT VIEW */
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 text-slate-700">
+                      <div className="p-2 bg-emerald-50 rounded-xl border border-emerald-100 text-emerald-600 flex items-center justify-center">
+                        <Plus className="w-4 h-4 stroke-[3]" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-black text-slate-800">Seat Walk-In Guest</h4>
+                        <p className="text-[10px] text-slate-400">Select covers to seat instantly. Starts 2h dining timer.</p>
+                      </div>
+                    </div>
+
+                    {/* Fast Covers Grid */}
+                    <div>
+                      <label className="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-2 font-mono">
+                        Select Covers
+                      </label>
+                      <div className="grid grid-cols-4 gap-2">
+                        {Array.from({ length: modalGroup ? modalGroup.capacity : activeTableModal.capacity }).map((_, i) => {
+                          const count = i + 1;
+                          return (
+                            <button
+                              key={count}
+                              onClick={() => {
+                                seatWalkIn(modalGroup ? modalGroup.id : activeTableModal.id, count);
+                                setActiveTableModal(null);
+                              }}
+                              className="bg-slate-50 hover:bg-amber-500 hover:text-white border border-zinc-200 text-slate-800 text-xs font-black py-2.5 rounded-lg transition active:scale-95 flex items-center justify-center cursor-pointer"
+                            >
+                              {count}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Manual/Larger Seating Trigger */}
+                    <div className="pt-2 flex justify-between gap-2.5">
+                      <button
+                        onClick={() => {
+                          seatWalkIn(modalGroup ? modalGroup.id : activeTableModal.id, modalGroup ? modalGroup.capacity : activeTableModal.capacity);
+                          setActiveTableModal(null);
+                        }}
+                        className="flex-1 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-extrabold py-2.5 px-3 rounded-lg transition active:scale-98 flex items-center justify-center gap-1"
+                      >
+                        Seat Max ({modalGroup ? modalGroup.capacity : activeTableModal.capacity})
+                      </button>
+                      <button
+                        onClick={() => setActiveTableModal(null)}
+                        className="px-3 py-2.5 border border-zinc-200 text-slate-500 text-[11px] font-extrabold rounded-lg hover:bg-slate-50 transition"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* TABLE STATUS & ACTIVE TIMER VIEW */
+                  <div className="space-y-4">
+                    
+                    {/* Seated Info */}
+                    <div className="flex items-start gap-3">
+                      <div className={`p-2.5 rounded-xl border flex items-center justify-center ${
+                        modalRes.status === 'Pending' ? 'bg-amber-50 border-amber-100 text-amber-600' :
+                        modalRes.status === 'Seated' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' :
+                        'bg-slate-50 border-zinc-200 text-slate-500'
+                      }`}>
+                        <User className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[9px] bg-slate-100 border border-zinc-200 rounded px-1 py-0.5 font-extrabold text-slate-500 uppercase tracking-widest font-mono">
+                          {modalRes.status}
+                        </span>
+                        <h4 className="text-sm font-black text-slate-900 mt-1 truncate">{modalRes.guestName}</h4>
+                        <p className="text-[10px] text-slate-500 font-bold font-mono mt-0.5">
+                          {modalRes.pax} Covers • Seated at {modalRes.time}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Timer Countdown Card */}
+                    {modalRes.status === 'Seated' && modalRes.seatedAtTimestamp && (() => {
+                      const elapsed = Math.floor((Date.now() - modalRes.seatedAtTimestamp) / 60000);
+                      const isStool = parseInt(activeTableModal.id, 10) >= 10 && parseInt(activeTableModal.id, 10) <= 15;
+                      const duration = isStool ? 90 : 120;
+                      const remaining = Math.max(0, duration - elapsed);
+                      const isWarning = elapsed >= 105;
+
+                      return (
+                        <div className={`p-3.5 rounded-xl border flex items-center justify-between shadow-sm ${
+                          isWarning 
+                            ? 'bg-rose-50 border-rose-200 text-rose-800 animate-pulse' 
+                            : 'bg-emerald-50/50 border-emerald-100 text-emerald-800'
+                        }`}>
+                          <div className="flex items-center gap-2.5">
+                            <Clock className={`w-4 h-4 ${isWarning ? 'text-rose-600' : 'text-emerald-600'}`} />
+                            <div>
+                              <span className="text-[9px] uppercase font-bold tracking-wider font-mono block opacity-75">
+                                {isWarning ? 'Limit Exceeded' : 'Dining Timer'}
+                              </span>
+                              <span className="text-sm font-black font-mono leading-none mt-0.5 block">
+                                {elapsed >= duration ? `Over by ${elapsed - duration}m` : `${Math.floor(remaining / 60)}h ${remaining % 60}m remaining`}
+                              </span>
+                            </div>
+                          </div>
+                          {isWarning && (
+                            <span className="flex items-center gap-0.5 bg-rose-600 text-white text-[8px] font-black uppercase tracking-wider py-0.5 px-1.5 rounded shadow-sm">
+                              <AlertTriangle className="w-2.5 h-2.5" /> Red Warning
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Action Buttons */}
+                    <div className="space-y-2 pt-1">
+                      <button
+                        onClick={() => {
+                          updateReservation(modalRes.id, { status: 'Completed' });
+                          canvasConfetti({
+                            particleCount: 80,
+                            spread: 60,
+                            origin: { y: 0.7 },
+                            colors: ['#15803d', '#cbd5e1', '#0f172a'],
+                          });
+                          setActiveTableModal(null);
+                        }}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 border border-emerald-700 text-white font-extrabold py-2.5 px-3 rounded-lg transition active:scale-98 flex items-center justify-center gap-1 text-[11px]"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Complete Booking (Free Table)
+                      </button>
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            updateReservation(modalRes.id, { tableId: null });
+                            setActiveTableModal(null);
+                          }}
+                          className="flex-1 border border-zinc-200 text-slate-700 hover:bg-slate-50 font-extrabold py-2.5 px-3 rounded-lg text-[10px] transition flex items-center justify-center gap-1"
+                        >
+                          Unassign
+                        </button>
+
+                        <button
+                          onClick={() => setActiveTableModal(null)}
+                          className="flex-1 bg-slate-100 hover:bg-slate-200 border border-zinc-200 text-slate-600 font-extrabold py-2.5 px-3 rounded-lg text-[10px] transition"
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </div>
+
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

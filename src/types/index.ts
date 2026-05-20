@@ -31,4 +31,6 @@ export interface Reservation {
   status: ReservationStatus;
   notes: string;
   date: string; // YYYY-MM-DD
+  seatedAtTimestamp?: number; // millisecond timestamp when reservation was seated
 }
+

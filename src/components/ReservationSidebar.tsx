@@ -28,6 +28,13 @@ export default function ReservationSidebar() {
 
   // Local component states
   const [isFormOpen, setIsFormOpen] = useState(false);
+
+  // Periodic tick to force re-render of active timers every 10 seconds
+  const [tick, setTick] = useState(0);
+  React.useEffect(() => {
+    const timer = setInterval(() => setTick((t) => t + 1), 10000);
+    return () => clearInterval(timer);
+  }, []);
   const [guestName, setGuestName] = useState('');
   const [pax, setPax] = useState(2);
   const [time, setTime] = useState('19:00');
@@ -345,6 +352,25 @@ export default function ReservationSidebar() {
             const assignedName = getAssignedName(res.tableId);
             const isCurrentAssignee = activeReservationId === res.id;
 
+            // Calculate elapsed time for red warning status (1 hour 45 minutes)
+            let isWarning = false;
+            let timerLabel = '';
+            if (res.status === 'Seated' && res.seatedAtTimestamp) {
+              const elapsed = Math.floor((Date.now() - res.seatedAtTimestamp) / 60000);
+              const isStool = res.tableId ? (parseInt(res.tableId, 10) >= 10 && parseInt(res.tableId, 10) <= 15) : false;
+              const duration = isStool ? 90 : 120;
+              const remaining = Math.max(0, duration - elapsed);
+              isWarning = elapsed >= 105;
+
+              if (elapsed >= duration) {
+                timerLabel = `Over by ${elapsed - duration}m`;
+              } else {
+                const hrs = Math.floor(remaining / 60);
+                const mins = remaining % 60;
+                timerLabel = hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
+              }
+            }
+
             // Visual mapping based on Statuses
             let statusStyle = 'bg-slate-100 border border-zinc-300 text-slate-600';
             let cardBorderClass = 'border-zinc-200 hover:border-zinc-350 shadow-sm';
@@ -357,9 +383,15 @@ export default function ReservationSidebar() {
                 : 'border-zinc-200';
               if (isAssigned) glowAccent = 'glow-gold';
             } else if (res.status === 'Seated') {
-              statusStyle = 'bg-emerald-50 text-emerald-700 border-emerald-600/30';
-              cardBorderClass = 'border-emerald-600/40 hover:border-emerald-600/60';
-              glowAccent = 'glow-emerald';
+              if (isWarning) {
+                statusStyle = 'bg-rose-50 text-rose-700 border-rose-600/30 animate-pulse font-extrabold';
+                cardBorderClass = 'border-rose-600/40 hover:border-rose-600/60 bg-rose-50/10 shadow-sm shadow-rose-100';
+                glowAccent = 'glow-rose';
+              } else {
+                statusStyle = 'bg-emerald-50 text-emerald-700 border-emerald-600/30';
+                cardBorderClass = 'border-emerald-600/40 hover:border-emerald-600/60';
+                glowAccent = 'glow-emerald';
+              }
             } else if (res.status === 'Completed') {
               statusStyle = 'bg-slate-100 text-slate-500';
               cardBorderClass = 'border-zinc-200 opacity-60 bg-slate-50/50 shadow-none';
@@ -379,7 +411,7 @@ export default function ReservationSidebar() {
                   style={{
                     backgroundColor: 
                       res.status === 'Pending' && isAssigned ? '#d97706' :
-                      res.status === 'Seated' ? '#15803d' : 
+                      res.status === 'Seated' ? (isWarning ? '#dc2626' : '#15803d') : 
                       res.status === 'Completed' ? '#64748b' : '#cbd5e1'
                   }}
                 />
@@ -399,6 +431,13 @@ export default function ReservationSidebar() {
                       <span className="flex items-center gap-1 text-[11px]">
                         <Clock className="w-3.5 h-3.5 text-slate-400" /> {res.time}
                       </span>
+                      {res.status === 'Seated' && timerLabel && (
+                        <span className={`flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded font-black tracking-tight ${
+                          isWarning ? 'bg-rose-100 text-rose-800 animate-pulse' : 'bg-emerald-100 text-emerald-800'
+                        }`}>
+                          <Clock className="w-3 h-3" /> {timerLabel}
+                        </span>
+                      )}
                     </div>
                   </div>
 
