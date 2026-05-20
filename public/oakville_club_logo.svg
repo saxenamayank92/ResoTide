@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <!-- Premium Yachting Crest Layout -->
+  <defs>
+    <!-- Royal Navy deep palette -->
+    <linearGradient id="navyCrest" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+    
+    <!-- Yacht Club Gold gradient -->
+    <linearGradient id="goldCrest" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+  </defs>
+
+  <!-- Outer circular border -->
+  <circle cx="100" cy="100" r="92" fill="none" stroke="url(#goldCrest)" stroke-width="2.5" />
+  <circle cx="100" cy="100" r="86" fill="url(#navyCrest)" />
+
+  <!-- Gold anchor vector silhouette (Yachting symbol) -->
+  <g transform="translate(100, 100) scale(0.65)">
+    <!-- Anchor Ring -->
+    <circle cx="0" cy="-60" r="12" fill="none" stroke="url(#goldCrest)" stroke-width="6" />
+    
+    <!-- Anchor Shank (Vertical stem) -->
+    <rect x="-4.5" y="-50" width="9" height="90" rx="3.5" fill="url(#goldCrest)" />
+    
+    <!-- Crossbeam (Stock) -->
+    <rect x="-35" y="-38" width="70" height="9" rx="3" fill="url(#goldCrest)" />
+    <circle cx="-35" cy="-33.5" r="5.5" fill="url(#goldCrest)" />
+    <circle cx="35" cy="-33.5" r="5.5" fill="url(#goldCrest)" />
+
+    <!-- Anchor Flukes (Crescent curves) -->
+    <path d="M -55 5 C -55 45, 55 45, 55 5 C 40 40, -40 40, -55 5 Z" fill="url(#goldCrest)" />
+    
+    <!-- Anchor Crown (Base center point) -->
+    <path d="M -10 38 L 10 38 L 0 52 Z" fill="url(#goldCrest)" />
+
+    <!-- Left and right fluke arrow points -->
+    <path d="M -57 5 L -45 10 L -50 0 Z" fill="url(#goldCrest)" />
+    <path d="M 57 5 L 45 10 L 50 0 Z" fill="url(#goldCrest)" />
+  </g>
+
+  <!-- Left Laurel Branch (Gold) -->
+  <path d="M 40 135 C 30 110, 30 80, 42 55" fill="none" stroke="url(#goldCrest)" stroke-width="1.5" stroke-dasharray="3 3" />
+  
+  <!-- Right Laurel Branch (Gold) -->
+  <path d="M 160 135 C 170 110, 170 80, 158 55" fill="none" stroke="url(#goldCrest)" stroke-width="1.5" stroke-dasharray="3 3" />
+
+  <!-- Circular typography text curved paths -->
+  <path id="textPathTop" d="M 28 100 A 72 72 0 1 1 172 100" fill="none" />
+  <path id="textPathBottom" d="M 172 100 A 72 72 0 0 1 28 100" fill="none" />
+
+  <!-- Curved Text labels -->
+  <text font-family="'Inter', sans-serif" font-size="9" font-weight="900" fill="#ffffff" letter-spacing="2">
+    <textPath href="#textPathTop" startOffset="50%" text-anchor="middle">THE OAKVILLE CLUB</textPath>
+  </text>
+  
+  <text font-family="'Inter', sans-serif" font-size="8" font-weight="900" fill="url(#goldCrest)" letter-spacing="1.5">
+    <textPath href="#textPathBottom" startOffset="50%" text-anchor="middle">FOUNDED 1907</textPath>
+  </text>
+</svg>

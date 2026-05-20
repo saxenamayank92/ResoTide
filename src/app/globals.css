@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+:root {
+  /* Premium Yachting Sunlight-Readable Light Theme */
+  --background: #f4f6f9;               /* Ultra-clean off-white background */
+  --foreground: #0f172a;               /* Deep navy text for extreme sunlight contrast */
+  
+  --card-bg: #ffffff;                  /* Crisp white card base */
+  --card-border: rgba(15, 23, 42, 0.08); /* Faint navy borders */
+  --card-hover-border: rgba(15, 23, 42, 0.18);
+
+  /* Sunlight-Readable Solid Status Color Scales */
+  --color-neutral: 71, 85, 105;        /* Slate Blue */
+  --color-assigned: 217, 119, 6;       /* Strong Yacht Gold / Amber */
+  --color-seated: 21, 128, 61;         /* Solid Forest Green */
+  --color-completed: 100, 116, 139;    /* Muted Slate Grey */
+
+  --glow-neutral: rgba(71, 85, 105, 0.15);
+  --glow-assigned: rgba(217, 119, 6, 0.25);
+  --glow-seated: rgba(21, 128, 61, 0.25);
+  --glow-completed: rgba(100, 116, 139, 0.05);
+}
+
+@theme {
+  --color-bg-base: var(--background);
+  --color-text-base: var(--foreground);
+  --color-card-base: var(--card-bg);
+  --color-card-border: var(--card-border);
+  
+  /* Status mappings */
+  --color-neutral-status: rgb(var(--color-neutral));
+  --color-assigned-status: rgb(var(--color-assigned));
+  --color-seated-status: rgb(var(--color-seated));
+  --color-completed-status: rgb(var(--color-completed));
+}
+
+html, body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  overflow-x: hidden;
+  height: 100%;
+}
+
+/* Premium Sunlight Glassmorphic Overlay (Frosted White) */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.08);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-panel:hover {
+  border-color: rgba(15, 23, 42, 0.18);
+  box-shadow: 0 12px 35px -8px rgba(15, 23, 42, 0.12);
+}
+
+/* Scrollbars for beautiful sleek listings */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.02);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.12);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 42, 0.25);
+}
+
+/* Sunlight-readable solid glows and thick borders */
+.glow-gold {
+  box-shadow: 0 4px 20px -2px rgba(217, 119, 6, 0.25);
+  border-color: rgba(217, 119, 6, 0.7);
+  border-width: 2px !important;
+}
+
+.glow-emerald {
+  box-shadow: 0 4px 20px -2px rgba(21, 128, 61, 0.25);
+  border-color: rgba(21, 128, 61, 0.7);
+  border-width: 2px !important;
+}
+
+.glow-selected {
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.25);
+  border-color: rgba(15, 23, 42, 0.8);
+  border-width: 2px !important;
+}
+
+/* Pulse animation for assigning status */
+@keyframes activePulse {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.2);
+    border-color: rgba(217, 119, 6, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.5);
+    border-color: rgba(217, 119, 6, 0.9);
+  }
+}
+
+.pulse-assign {
+  animation: activePulse 2s infinite ease-in-out;
+}
+
+/* Light contrast grid for physical builder */
+.grid-canvas-bg {
+  background-size: 20px 20px;
+  background-image: 
+    radial-gradient(circle, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
+  background-color: #f8fafc;
+}
+
+/* Layout utilities */
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}

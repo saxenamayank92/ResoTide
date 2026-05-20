@@ -1,0 +1,26 @@
+{
+  "name": "TableTide Floor Management",
+  "short_name": "TableTide",
+  "description": "Premium floor mapping and daily cover reservation console for private members clubs.",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "background_color": "#08090c",
+  "theme_color": "#08090c",
+  "orientation": "any",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
