@@ -4,7 +4,7 @@ import React from 'react';
 import { useTableTide } from '../context/TableTideContext';
 import { 
   Square, Circle, Link, Unlink, Trash, 
-  Monitor, Eye, BookOpen, Layers
+  Monitor, Eye, BookOpen, Layers, Lock, Unlock
 } from 'lucide-react';
 import LinkNext from 'next/link';
 
@@ -18,6 +18,8 @@ export default function Navbar() {
     joinSelectedTables,
     splitJoinedGroup,
     deleteTable,
+    isLayoutEditMode,
+    setIsLayoutEditMode,
   } = useTableTide();
 
   // B. Contextual button visibility logic
@@ -45,63 +47,92 @@ export default function Navbar() {
   return (
     <div className="w-full h-16 bg-white border-b border-zinc-200 px-6 flex items-center justify-between z-10 shadow-sm">
       
-      {/* 1. BUILDER ACTIONS PANEL */}
+      {/* 1. BUILDER / OPERATIONAL TOGGLE & ACTIONS */}
       <div className="flex items-center gap-4">
-        <div className="flex items-center gap-1 bg-slate-100 border border-zinc-200 rounded-lg p-1">
-          <button
-            onClick={() => addTable('rectangle')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold text-slate-700 hover:text-slate-900 hover:bg-slate-200 transition"
-            title="Insert a rectangular table onto the floor"
-          >
-            <Square className="w-3.5 h-3.5 text-slate-500" />
-            Add Rect
-          </button>
-          
-          <button
-            onClick={() => addTable('round')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold text-slate-700 hover:text-slate-900 hover:bg-slate-200 transition"
-            title="Insert a circular banquet table onto the floor"
-          >
-            <Circle className="w-3.5 h-3.5 text-slate-500" />
-            Add Round
-          </button>
-        </div>
+        <button
+          onClick={() => {
+            setIsLayoutEditMode(!isLayoutEditMode);
+            setSelectedTableIds([]);
+          }}
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-black transition border shadow-sm cursor-pointer ${
+            isLayoutEditMode
+              ? 'bg-rose-50 border-rose-200 hover:bg-rose-100 text-rose-700'
+              : 'bg-slate-900 hover:bg-slate-800 text-white border-slate-950'
+          }`}
+          title={isLayoutEditMode ? "Lock the floor plan layout to prevent editing" : "Unlock the floor plan layout to edit tables"}
+        >
+          {isLayoutEditMode ? (
+            <>
+              <Unlock className="w-3.5 h-3.5 text-rose-600 stroke-[2.5]" />
+              <span>Lock Layout</span>
+            </>
+          ) : (
+            <>
+              <Lock className="w-3.5 h-3.5 text-zinc-400 stroke-[2.5]" />
+              <span>Manage Floor Plan</span>
+            </>
+          )}
+        </button>
 
-        {/* 2. CONTEXTUAL CANVAS SELECTIONS ACTIONS */}
-        {selectedTableIds.length > 0 && (
-          <div className="flex items-center gap-2 animate-fadeIn border-l border-zinc-200 pl-4">
-            
-            {/* Join Tables */}
-            {canJoin && (
+        {isLayoutEditMode && (
+          <>
+            <div className="flex items-center gap-1 bg-slate-100 border border-zinc-200 rounded-lg p-1 animate-fadeIn">
               <button
-                onClick={joinSelectedTables}
-                className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 border border-amber-600 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm"
+                onClick={() => addTable('rectangle')}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold text-slate-700 hover:text-slate-900 hover:bg-slate-200 transition"
+                title="Insert a rectangular table onto the floor"
               >
-                <Link className="w-3.5 h-3.5" />
-                Join Tables
+                <Square className="w-3.5 h-3.5 text-slate-500" />
+                Add Rect
               </button>
-            )}
-
-            {/* Split Tables */}
-            {canSplit && (
+              
               <button
-                onClick={handleSplit}
-                className="flex items-center gap-1.5 bg-slate-100 border border-zinc-300 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition"
+                onClick={() => addTable('round')}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold text-slate-700 hover:text-slate-900 hover:bg-slate-200 transition"
+                title="Insert a circular banquet table onto the floor"
               >
-                <Unlink className="w-3.5 h-3.5" />
-                Split Joined Group
+                <Circle className="w-3.5 h-3.5 text-slate-500" />
+                Add Round
               </button>
-            )}
+            </div>
 
-            {/* Delete Tables */}
-            <button
-              onClick={handleDelete}
-              className="flex items-center gap-1.5 bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-bold transition"
-            >
-              <Trash className="w-3.5 h-3.5" />
-              Delete Table ({selectedTableIds.length})
-            </button>
-          </div>
+            {/* 2. CONTEXTUAL CANVAS SELECTIONS ACTIONS */}
+            {selectedTableIds.length > 0 && (
+              <div className="flex items-center gap-2 animate-fadeIn border-l border-zinc-200 pl-4">
+                
+                {/* Join Tables */}
+                {canJoin && (
+                  <button
+                    onClick={joinSelectedTables}
+                    className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 border border-amber-600 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm"
+                  >
+                    <Link className="w-3.5 h-3.5" />
+                    Join Tables
+                  </button>
+                )}
+
+                {/* Split Tables */}
+                {canSplit && (
+                  <button
+                    onClick={handleSplit}
+                    className="flex items-center gap-1.5 bg-slate-100 border border-zinc-300 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition"
+                  >
+                    <Unlink className="w-3.5 h-3.5" />
+                    Split Joined Group
+                  </button>
+                )}
+
+                {/* Delete Tables */}
+                <button
+                  onClick={handleDelete}
+                  className="flex items-center gap-1.5 bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-bold transition"
+                >
+                  <Trash className="w-3.5 h-3.5" />
+                  Delete Table ({selectedTableIds.length})
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 

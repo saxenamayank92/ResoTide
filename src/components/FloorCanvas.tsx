@@ -25,6 +25,7 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
     activeDate,
     seatWalkIn,
     updateReservation,
+    isLayoutEditMode,
   } = useTableTide();
 
   const stageRef = useRef<any>(null);
@@ -42,6 +43,18 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
   }, []);
 
   const [activeTableModal, setActiveTableModal] = useState<Table | null>(null);
+  const [walkInCovers, setWalkInCovers] = useState<number>(2);
+
+  // Sync walk-in covers state whenever active table modal opens
+  useEffect(() => {
+    if (activeTableModal) {
+      const modalGroup = activeTableModal.parentId 
+        ? joinedGroups.find((g) => g.id === activeTableModal.parentId) 
+        : null;
+      const defaultCapacity = modalGroup ? modalGroup.capacity : activeTableModal.capacity;
+      setWalkInCovers(defaultCapacity);
+    }
+  }, [activeTableModal, joinedGroups]);
 
   // Fluid responsive stage variables relative to the 1380px baseline coordinate blueprint
   const [dimensions, setDimensions] = useState({ width: 1380, height: 500 });
@@ -180,9 +193,17 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
     // B. Read-only mode logic
     if (readOnly) return;
 
-    // C. Multi-select / Single-select Logic
-    const isShiftPressed = e.evt.shiftKey;
     const targetId = table.id;
+
+    // If layout lock is ACTIVE (normal hostess operation mode, isLayoutEditMode is false)
+    if (!isLayoutEditMode) {
+      setSelectedTableIds([]);
+      setActiveTableModal(table);
+      return;
+    }
+
+    // C. Multi-select / Single-select Logic (Only in layout edit mode)
+    const isShiftPressed = e.evt.shiftKey;
 
     if (table.isJoined && table.parentId) {
       const group = joinedGroups.find((g) => g.id === table.parentId);
@@ -202,8 +223,6 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
           }
         } else {
           setSelectedTableIds([...group.tableIds]);
-          // Open quick walk-in or table operations modal
-          setActiveTableModal(table);
         }
       }
     } else {
@@ -215,8 +234,6 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
         }
       } else {
         setSelectedTableIds([targetId]);
-        // Open quick walk-in or table operations modal
-        setActiveTableModal(table);
       }
     }
   };
@@ -343,7 +360,7 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
                 id={`group-${table.id}`}
                 x={table.x}
                 y={table.y}
-                draggable={!readOnly && !table.isJoined}
+                draggable={!readOnly && isLayoutEditMode && !table.isJoined}
                 onDragEnd={(e) => handleDragEnd(e, table.id)}
                 onClick={(e) => handleTableClick(e, table)}
                 onTouchStart={(e) => handleTableClick(e, table)}
@@ -563,7 +580,7 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
           })}
 
           {/* C. RENDER TRANSFORMER HANDLES */}
-          {!readOnly && (
+          {!readOnly && isLayoutEditMode && (
             <Transformer
               ref={transformerRef}
               boundBoxFunc={(oldBox, newBox) => {
@@ -643,44 +660,41 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
                       </div>
                     </div>
 
-                    {/* Fast Covers Grid */}
+                    {/* Fast Covers Dropdown */}
                     <div>
                       <label className="block text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-2 font-mono">
                         Select Covers
                       </label>
-                      <div className="grid grid-cols-4 gap-2">
-                        {Array.from({ length: modalGroup ? modalGroup.capacity : activeTableModal.capacity }).map((_, i) => {
-                          const count = i + 1;
-                          return (
-                            <button
-                              key={count}
-                              onClick={() => {
-                                seatWalkIn(modalGroup ? modalGroup.id : activeTableModal.id, count);
-                                setActiveTableModal(null);
-                              }}
-                              className="bg-slate-50 hover:bg-amber-500 hover:text-white border border-zinc-200 text-slate-800 text-xs font-black py-2.5 rounded-lg transition active:scale-95 flex items-center justify-center cursor-pointer"
-                            >
-                              {count}
-                            </button>
-                          );
-                        })}
-                      </div>
+                      <select
+                        value={walkInCovers}
+                        onChange={(e) => setWalkInCovers(Number(e.target.value))}
+                        className="w-full bg-slate-50 border border-zinc-300 rounded-lg p-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 cursor-pointer shadow-sm"
+                      >
+                        {Array.from({ 
+                          length: Math.max(30, modalGroup ? modalGroup.capacity : activeTableModal.capacity) 
+                        }, (_, i) => i + 1).map((num) => (
+                          <option key={num} value={num}>
+                            {num} {num === 1 ? 'Guest (Cover)' : 'Guests (Covers)'}
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
                     {/* Manual/Larger Seating Trigger */}
                     <div className="pt-2 flex justify-between gap-2.5">
                       <button
                         onClick={() => {
-                          seatWalkIn(modalGroup ? modalGroup.id : activeTableModal.id, modalGroup ? modalGroup.capacity : activeTableModal.capacity);
+                          seatWalkIn(modalGroup ? modalGroup.id : activeTableModal.id, walkInCovers);
                           setActiveTableModal(null);
                         }}
-                        className="flex-1 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-extrabold py-2.5 px-3 rounded-lg transition active:scale-98 flex items-center justify-center gap-1"
+                        className="flex-1 bg-slate-900 hover:bg-slate-800 border border-slate-950 text-white text-[11px] font-extrabold py-2.5 px-3 rounded-lg transition active:scale-98 flex items-center justify-center gap-1.5 cursor-pointer"
                       >
-                        Seat Max ({modalGroup ? modalGroup.capacity : activeTableModal.capacity})
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 stroke-[2.5]" />
+                        Confirm & Seat Walk-in
                       </button>
                       <button
                         onClick={() => setActiveTableModal(null)}
-                        className="px-3 py-2.5 border border-zinc-200 text-slate-500 text-[11px] font-extrabold rounded-lg hover:bg-slate-50 transition"
+                        className="px-3 py-2.5 border border-zinc-200 text-slate-500 text-[11px] font-extrabold rounded-lg hover:bg-slate-50 transition cursor-pointer"
                       >
                         Cancel
                       </button>

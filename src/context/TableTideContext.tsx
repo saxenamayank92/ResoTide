@@ -36,6 +36,10 @@ interface TableTideContextType {
   // Daily operations
   clearDay: () => void;
   changeDate: (dateStr: string) => void;
+  
+  // Layout Lock state
+  isLayoutEditMode: boolean;
+  setIsLayoutEditMode: (val: boolean) => void;
 }
 
 const TableTideContext = createContext<TableTideContextType | undefined>(undefined);
@@ -107,6 +111,7 @@ export const TableTideProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [activeReservationId, setActiveReservationId] = useState<string | null>(null);
   const [activeDate, setActiveDate] = useState<string>('');
   const [isMounted, setIsMounted] = useState<boolean>(false);
+  const [isLayoutEditMode, setIsLayoutEditMode] = useState<boolean>(false);
 
   const isAssigningMode = activeReservationId !== null;
 
@@ -506,6 +511,8 @@ export const TableTideProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         seatWalkIn,
         clearDay,
         changeDate,
+        isLayoutEditMode,
+        setIsLayoutEditMode,
       }}
     >
       {children}
