@@ -94,8 +94,8 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
     return () => cancelAnimationFrame(animId);
   }, []);
 
-  // Fluid responsive stage variables relative to the 1380px baseline coordinate blueprint (extended to 600px for dock and lakefront)
-  const [dimensions, setDimensions] = useState({ width: 1380, height: 600 });
+  // Fluid responsive stage variables relative to the 1380px baseline coordinate blueprint (extended to 780px for dock and deep lakefront)
+  const [dimensions, setDimensions] = useState({ width: 1380, height: 780 });
   const [scale, setScale] = useState(1);
 
   useEffect(() => {
@@ -113,7 +113,7 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
       setScale(newScale);
       setDimensions({
         width: paddedWidth,
-        height: 600 * newScale,
+        height: 780 * newScale,
       });
     };
 
@@ -337,7 +337,7 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
   };
 
   return (
-    <div ref={containerRef} className="relative w-full h-full min-h-[600px] flex items-center justify-center overflow-auto rounded-xl border border-zinc-200 bg-[#faf6f0] p-4 no-select shadow-sm">
+    <div ref={containerRef} className="relative w-full h-full min-h-[780px] flex items-center justify-center overflow-auto rounded-xl border border-zinc-200 bg-[#faf6f0] p-4 no-select shadow-sm">
       <Stage
         width={dimensions.width}
         height={dimensions.height}
@@ -439,41 +439,48 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
             x={0}
             y={436}
             width={1380}
-            height={164}
+            height={344}
             fillLinearGradientStartPoint={{ x: 0, y: 436 }}
-            fillLinearGradientEndPoint={{ x: 0, y: 600 }}
+            fillLinearGradientEndPoint={{ x: 0, y: 780 }}
             fillLinearGradientColorStops={[
               0, '#0ea5e9',   // Vivid Sky Blue (Top)
-              0.5, '#0284c7', // Azure Blue (Mid)
-              1, '#0369a1'    // Deep Sea Blue (Bottom)
+              0.35, '#0284c7', // Azure Blue
+              0.7, '#0369a1',  // Deep Sea Blue
+              1, '#075985'     // Abyss Blue (Bottom)
             ]}
           />
 
-          {/* Three Translucent Undulating Wave Lines */}
+          {/* Translucent Undulating Wave Lines spread across deeper water */}
           <Line
-            points={generateWavePoints(480, 0.45, 5, 2.2, 0)}
+            points={generateWavePoints(500, 0.45, 5, 2.2, 0)}
             stroke="rgba(255, 255, 255, 0.16)"
             strokeWidth={3}
             tension={0.5}
           />
           <Line
-            points={generateWavePoints(520, 0.65, 4, -1.8, Math.PI / 2)}
+            points={generateWavePoints(570, 0.65, 4, -1.8, Math.PI / 2)}
             stroke="rgba(255, 255, 255, 0.12)"
             strokeWidth={2}
             tension={0.5}
           />
           <Line
-            points={generateWavePoints(565, 0.8, 4.5, 2.8, Math.PI)}
+            points={generateWavePoints(640, 0.55, 3.5, 2.5, Math.PI * 0.7)}
             stroke="rgba(255, 255, 255, 0.1)"
             strokeWidth={2}
             tension={0.5}
           />
+          <Line
+            points={generateWavePoints(710, 0.8, 4.5, 2.8, Math.PI)}
+            stroke="rgba(255, 255, 255, 0.08)"
+            strokeWidth={2}
+            tension={0.5}
+          />
 
-          {/* TableTide Marina Classy Title Overlay */}
+          {/* Dockside Classy Title Watermark */}
           <Text
-            text="TABLETIDE MARINA & YACHT CLUB"
+            text="DOCKSIDE AT THE OAKVILLE CLUB"
             x={0}
-            y={572}
+            y={750}
             width={1380}
             fontSize={11}
             fontFamily="Inter, system-ui"
@@ -701,7 +708,7 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
               shadowColor="rgba(197, 168, 108, 0.15)"
             />
             <Text
-              text="TEAKWOOD BAR & LOUNGE"
+              text="DOCKSIDE BAR"
               width={277}
               y={20}
               fontSize={11}
