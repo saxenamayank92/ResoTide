@@ -94,8 +94,8 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
     return () => cancelAnimationFrame(animId);
   }, []);
 
-  // Fluid responsive stage variables relative to the 1380px baseline coordinate blueprint (extended to 780px for dock and deep lakefront)
-  const [dimensions, setDimensions] = useState({ width: 1380, height: 780 });
+  // Fluid responsive stage variables relative to the 1380px baseline coordinate blueprint (extended to 850px for dock and deep lakefront)
+  const [dimensions, setDimensions] = useState({ width: 1380, height: 850 });
   const [scale, setScale] = useState(1);
 
   useEffect(() => {
@@ -113,7 +113,7 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
       setScale(newScale);
       setDimensions({
         width: paddedWidth,
-        height: 780 * newScale,
+        height: 850 * newScale,
       });
     };
 
@@ -337,7 +337,7 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
   };
 
   return (
-    <div ref={containerRef} className="relative w-full h-full min-h-[780px] flex items-center justify-center overflow-auto rounded-xl border border-zinc-200 bg-[#faf6f0] p-4 no-select shadow-sm">
+    <div ref={containerRef} className="relative w-full h-full min-h-[850px] flex items-center justify-center overflow-auto rounded-xl border border-zinc-200 bg-[#faf6f0] p-4 no-select shadow-sm">
       <Stage
         width={dimensions.width}
         height={dimensions.height}
@@ -353,9 +353,9 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
             x={0}
             y={0}
             width={1380}
-            height={430}
+            height={500}
             fillLinearGradientStartPoint={{ x: 0, y: 0 }}
-            fillLinearGradientEndPoint={{ x: 0, y: 430 }}
+            fillLinearGradientEndPoint={{ x: 0, y: 500 }}
             fillLinearGradientColorStops={[
               0, '#fbf8f3',   // Crisp bright ivory wood (excellent sunlight readability)
               0.5, '#f5ede0', // Soft teak hue
@@ -364,8 +364,8 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
           />
 
           {/* Staggered Teak Plank Lines (Horizontal) */}
-          {Array.from({ length: 15 }).map((_, i) => {
-            const yVal = (i + 1) * 28.6;
+          {Array.from({ length: 17 }).map((_, i) => {
+            const yVal = (i + 1) * 29.4;
             return (
               <Line
                 key={`plank-${i}`}
@@ -382,8 +382,8 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
             const xVal = (col + 1) * 115;
             return Array.from({ length: 5 }).map((_, row) => {
               const yStart = row * 2 * 28.6 + (col % 2 === 0 ? 0 : 28.6);
-              const yEnd = yStart + 28.6;
-              if (yEnd > 430) return null;
+              const yEnd = yStart + 29.4;
+              if (yEnd > 500) return null;
               return (
                 <Line
                   key={`joint-${col}-${row}`}
@@ -399,11 +399,11 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
           {/* 2. Slate Concrete Mooring Curb Shoreline */}
           <Rect
             x={0}
-            y={428}
+            y={498}
             width={1380}
             height={8}
-            fillLinearGradientStartPoint={{ x: 0, y: 428 }}
-            fillLinearGradientEndPoint={{ x: 0, y: 436 }}
+            fillLinearGradientStartPoint={{ x: 0, y: 498 }}
+            fillLinearGradientEndPoint={{ x: 0, y: 506 }}
             fillLinearGradientColorStops={[0, '#475569', 1, '#1e293b']}
           />
 
@@ -411,7 +411,7 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
           {Array.from({ length: 14 }).map((_, i) => {
             const cleatX = 50 + i * 100;
             return (
-              <Group key={`cleat-${i}`} x={cleatX} y={426}>
+              <Group key={`cleat-${i}`} x={cleatX} y={496}>
                 {/* Cleat base */}
                 <Rect
                   x={-8}
@@ -437,11 +437,11 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
           {/* 3. Deep Blue Waterfront Lake Water Backdrop */}
           <Rect
             x={0}
-            y={436}
+            y={506}
             width={1380}
             height={344}
-            fillLinearGradientStartPoint={{ x: 0, y: 436 }}
-            fillLinearGradientEndPoint={{ x: 0, y: 780 }}
+            fillLinearGradientStartPoint={{ x: 0, y: 506 }}
+            fillLinearGradientEndPoint={{ x: 0, y: 850 }}
             fillLinearGradientColorStops={[
               0, '#0ea5e9',   // Vivid Sky Blue (Top)
               0.35, '#0284c7', // Azure Blue
@@ -452,25 +452,25 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
 
           {/* Translucent Undulating Wave Lines spread across deeper water */}
           <Line
-            points={generateWavePoints(500, 0.45, 5, 2.2, 0)}
+            points={generateWavePoints(570, 0.45, 5, 2.2, 0)}
             stroke="rgba(255, 255, 255, 0.16)"
             strokeWidth={3}
             tension={0.5}
           />
           <Line
-            points={generateWavePoints(570, 0.65, 4, -1.8, Math.PI / 2)}
+            points={generateWavePoints(640, 0.65, 4, -1.8, Math.PI / 2)}
             stroke="rgba(255, 255, 255, 0.12)"
             strokeWidth={2}
             tension={0.5}
           />
           <Line
-            points={generateWavePoints(640, 0.55, 3.5, 2.5, Math.PI * 0.7)}
+            points={generateWavePoints(710, 0.55, 3.5, 2.5, Math.PI * 0.7)}
             stroke="rgba(255, 255, 255, 0.1)"
             strokeWidth={2}
             tension={0.5}
           />
           <Line
-            points={generateWavePoints(710, 0.8, 4.5, 2.8, Math.PI)}
+            points={generateWavePoints(780, 0.8, 4.5, 2.8, Math.PI)}
             stroke="rgba(255, 255, 255, 0.08)"
             strokeWidth={2}
             tension={0.5}
@@ -480,7 +480,7 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
           <Text
             text="DOCKSIDE AT THE OAKVILLE CLUB"
             x={0}
-            y={750}
+            y={820}
             width={1380}
             fontSize={11}
             fontFamily="Inter, system-ui"
@@ -497,7 +497,7 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
             const bobOffsetX = Math.cos(animationTime * 1.5 + idx * 0.5) * 1.2;
             const swayAngle = Math.sin(animationTime * 1.6 + idx * 0.8) * 1.8;
 
-            const boatY = 445 + bobOffsetY;
+            const boatY = 515 + bobOffsetY;
             const boatX = boat.x + bobOffsetX;
 
             const w = boat.width;
