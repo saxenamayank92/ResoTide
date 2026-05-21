@@ -7,6 +7,31 @@ import { Table, JoinedGroup, Reservation } from '../types';
 import { Clock, Users, X, AlertTriangle, Plus, CheckCircle2, User } from 'lucide-react';
 import canvasConfetti from 'canvas-confetti';
 
+interface BoatConfig {
+  id: string;
+  x: number;
+  type: 'yacht' | 'sailboat' | 'speedboat';
+  color: string;
+  stripe: string;
+  length: number;
+  width: number;
+}
+
+const DECORATIVE_BOATS: BoatConfig[] = [
+  { id: 'b1', x: 85, type: 'yacht', color: '#ffffff', stripe: '#0284c7', length: 110, width: 34 },
+  { id: 'b2', x: 200, type: 'sailboat', color: '#f8fafc', stripe: '#e11d48', length: 95, width: 28 },
+  { id: 'b3', x: 315, type: 'speedboat', color: '#f1f5f9', stripe: '#10b981', length: 80, width: 26 },
+  { id: 'b4', x: 430, type: 'yacht', color: '#ffffff', stripe: '#f59e0b', length: 115, width: 36 },
+  { id: 'b5', x: 545, type: 'sailboat', color: '#f8fafc', stripe: '#6366f1', length: 100, width: 30 },
+  { id: 'b6', x: 660, type: 'yacht', color: '#f1f5f9', stripe: '#06b6d4', length: 105, width: 32 },
+  { id: 'b7', x: 775, type: 'sailboat', color: '#ffffff', stripe: '#ec4899', length: 98, width: 28 },
+  { id: 'b8', x: 890, type: 'speedboat', color: '#e2e8f0', stripe: '#1e293b', length: 82, width: 25 },
+  { id: 'b9', x: 1005, type: 'yacht', color: '#ffffff', stripe: '#8b5cf6', length: 112, width: 35 },
+  { id: 'b10', x: 1120, type: 'sailboat', color: '#f8fafc', stripe: '#16a34a', length: 96, width: 29 },
+  { id: 'b11', x: 1235, type: 'yacht', color: '#ffffff', stripe: '#ea580c', length: 118, width: 36 },
+  { id: 'b12', x: 1335, type: 'speedboat', color: '#f8fafc', stripe: '#f43f5e', length: 78, width: 24 },
+];
+
 interface FloorCanvasProps {
   readOnly?: boolean;
 }
@@ -56,8 +81,21 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
     }
   }, [activeTableModal, joinedGroups]);
 
-  // Fluid responsive stage variables relative to the 1380px baseline coordinate blueprint
-  const [dimensions, setDimensions] = useState({ width: 1380, height: 500 });
+  const [animationTime, setAnimationTime] = useState(0);
+
+  // Smooth animation frame loop for undulating waves and bobbing yachts
+  useEffect(() => {
+    let animId: number;
+    const updateAnimation = () => {
+      setAnimationTime((prev) => (prev + 0.015) % (Math.PI * 4));
+      animId = requestAnimationFrame(updateAnimation);
+    };
+    animId = requestAnimationFrame(updateAnimation);
+    return () => cancelAnimationFrame(animId);
+  }, []);
+
+  // Fluid responsive stage variables relative to the 1380px baseline coordinate blueprint (extended to 600px for dock and lakefront)
+  const [dimensions, setDimensions] = useState({ width: 1380, height: 600 });
   const [scale, setScale] = useState(1);
 
   useEffect(() => {
@@ -75,7 +113,7 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
       setScale(newScale);
       setDimensions({
         width: paddedWidth,
-        height: 500 * newScale,
+        height: 600 * newScale,
       });
     };
 
@@ -285,8 +323,21 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
     });
   };
 
+  // Generate wave line points dynamically using animationTime
+  const generateWavePoints = (offsetY: number, frequency: number, amplitude: number, speed: number, phase: number) => {
+    const pts: number[] = [];
+    const segments = 12;
+    const width = 1380;
+    for (let i = 0; i <= segments; i++) {
+      const x = (i / segments) * width;
+      const y = offsetY + Math.sin(animationTime * speed + (i * frequency) + phase) * amplitude;
+      pts.push(x, y);
+    }
+    return pts;
+  };
+
   return (
-    <div ref={containerRef} className="relative w-full h-full min-h-[500px] flex items-start justify-start overflow-auto rounded-xl border border-zinc-200 bg-[#f8fafc] grid-canvas-bg p-4 no-select shadow-sm">
+    <div ref={containerRef} className="relative w-full h-full min-h-[600px] flex items-center justify-center overflow-auto rounded-xl border border-zinc-200 bg-[#faf6f0] p-4 no-select shadow-sm">
       <Stage
         width={dimensions.width}
         height={dimensions.height}
@@ -297,51 +348,368 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
         onTouchEnd={handleStageClick}
       >
         <Layer>
-          {/* Static Decorative BAR (Oakville Yacht Club theme) */}
+          {/* 1. Teak Wood Boardwalk Backdrop */}
+          <Rect
+            x={0}
+            y={0}
+            width={1380}
+            height={430}
+            fillLinearGradientStartPoint={{ x: 0, y: 0 }}
+            fillLinearGradientEndPoint={{ x: 0, y: 430 }}
+            fillLinearGradientColorStops={[
+              0, '#fbf8f3',   // Crisp bright ivory wood (excellent sunlight readability)
+              0.5, '#f5ede0', // Soft teak hue
+              1, '#e7dcbc'    // Shoreline shading shadow
+            ]}
+          />
+
+          {/* Staggered Teak Plank Lines (Horizontal) */}
+          {Array.from({ length: 15 }).map((_, i) => {
+            const yVal = (i + 1) * 28.6;
+            return (
+              <Line
+                key={`plank-${i}`}
+                points={[0, yVal, 1380, yVal]}
+                stroke="#dcd0b5"
+                strokeWidth={1}
+                opacity={0.65}
+              />
+            );
+          })}
+
+          {/* Staggered Teak Plank Joints (Vertical) */}
+          {Array.from({ length: 12 }).map((_, col) => {
+            const xVal = (col + 1) * 115;
+            return Array.from({ length: 5 }).map((_, row) => {
+              const yStart = row * 2 * 28.6 + (col % 2 === 0 ? 0 : 28.6);
+              const yEnd = yStart + 28.6;
+              if (yEnd > 430) return null;
+              return (
+                <Line
+                  key={`joint-${col}-${row}`}
+                  points={[xVal, yStart, xVal, yEnd]}
+                  stroke="#dcd0b5"
+                  strokeWidth={1}
+                  opacity={0.4}
+                />
+              );
+            });
+          })}
+
+          {/* 2. Slate Concrete Mooring Curb Shoreline */}
+          <Rect
+            x={0}
+            y={428}
+            width={1380}
+            height={8}
+            fillLinearGradientStartPoint={{ x: 0, y: 428 }}
+            fillLinearGradientEndPoint={{ x: 0, y: 436 }}
+            fillLinearGradientColorStops={[0, '#475569', 1, '#1e293b']}
+          />
+
+          {/* Mooring Cleats at Horizonal Intervals */}
+          {Array.from({ length: 14 }).map((_, i) => {
+            const cleatX = 50 + i * 100;
+            return (
+              <Group key={`cleat-${i}`} x={cleatX} y={426}>
+                {/* Cleat base */}
+                <Rect
+                  x={-8}
+                  y={0}
+                  width={16}
+                  height={3.5}
+                  fill="#94a3b8"
+                  stroke="#475569"
+                  strokeWidth={0.8}
+                  cornerRadius={1.5}
+                />
+                {/* Cleat horns */}
+                <Line
+                  points={[-12, -2, 12, -2]}
+                  stroke="#94a3b8"
+                  strokeWidth={2}
+                  lineCap="round"
+                />
+              </Group>
+            );
+          })}
+
+          {/* 3. Deep Blue Waterfront Lake Water Backdrop */}
+          <Rect
+            x={0}
+            y={436}
+            width={1380}
+            height={164}
+            fillLinearGradientStartPoint={{ x: 0, y: 436 }}
+            fillLinearGradientEndPoint={{ x: 0, y: 600 }}
+            fillLinearGradientColorStops={[
+              0, '#0ea5e9',   // Vivid Sky Blue (Top)
+              0.5, '#0284c7', // Azure Blue (Mid)
+              1, '#0369a1'    // Deep Sea Blue (Bottom)
+            ]}
+          />
+
+          {/* Three Translucent Undulating Wave Lines */}
+          <Line
+            points={generateWavePoints(480, 0.45, 5, 2.2, 0)}
+            stroke="rgba(255, 255, 255, 0.16)"
+            strokeWidth={3}
+            tension={0.5}
+          />
+          <Line
+            points={generateWavePoints(520, 0.65, 4, -1.8, Math.PI / 2)}
+            stroke="rgba(255, 255, 255, 0.12)"
+            strokeWidth={2}
+            tension={0.5}
+          />
+          <Line
+            points={generateWavePoints(565, 0.8, 4.5, 2.8, Math.PI)}
+            stroke="rgba(255, 255, 255, 0.1)"
+            strokeWidth={2}
+            tension={0.5}
+          />
+
+          {/* TableTide Marina Classy Title Overlay */}
+          <Text
+            text="TABLETIDE MARINA & YACHT CLUB"
+            x={0}
+            y={572}
+            width={1380}
+            fontSize={11}
+            fontFamily="Inter, system-ui"
+            fill="#ffffff"
+            opacity={0.3}
+            align="center"
+            fontStyle="bold"
+            letterSpacing={4}
+          />
+
+          {/* 4. Moored Boats Bobbing & Swaying */}
+          {DECORATIVE_BOATS.map((boat, idx) => {
+            const bobOffsetY = Math.sin(animationTime * 2.2 + idx * 0.7) * 2.8;
+            const bobOffsetX = Math.cos(animationTime * 1.5 + idx * 0.5) * 1.2;
+            const swayAngle = Math.sin(animationTime * 1.6 + idx * 0.8) * 1.8;
+
+            const boatY = 445 + bobOffsetY;
+            const boatX = boat.x + bobOffsetX;
+
+            const w = boat.width;
+            const L = boat.length;
+
+            return (
+              <Group
+                key={boat.id}
+                x={boatX}
+                y={boatY}
+                rotation={swayAngle}
+                offsetX={0}
+                offsetY={0}
+              >
+                {/* Mooring ropes to dock curb */}
+                <Line
+                  points={[-w / 2 + 4, 2, -12, -9]}
+                  stroke="#475569"
+                  strokeWidth={1.2}
+                  dash={[3, 3]}
+                  opacity={0.7}
+                />
+                <Line
+                  points={[w / 2 - 4, 2, 12, -9]}
+                  stroke="#475569"
+                  strokeWidth={1.2}
+                  dash={[3, 3]}
+                  opacity={0.7}
+                />
+
+                {/* Boat Hull Outer Line */}
+                <Line
+                  points={[
+                    -w / 2, 4,
+                    w / 2, 4,
+                    w / 2, L * 0.55,
+                    0, L,
+                    -w / 2, L * 0.55
+                  ]}
+                  closed={true}
+                  fill={boat.color}
+                  stroke="#334155"
+                  strokeWidth={1.5}
+                  shadowColor="rgba(0, 0, 0, 0.2)"
+                  shadowBlur={6}
+                  shadowOffset={{ x: 2, y: 3 }}
+                />
+
+                {/* Teak Wood Stern Swim Platform */}
+                <Rect
+                  x={-w / 2 + 2}
+                  y={0}
+                  width={w - 4}
+                  height={4}
+                  fill="#c2915c"
+                  stroke="#78350f"
+                  strokeWidth={0.5}
+                  cornerRadius={0.5}
+                />
+
+                {/* Deck Accent Stripe Inset */}
+                <Line
+                  points={[
+                    -w / 2 + 3, 6,
+                    w / 2 - 3, 6,
+                    w / 2 - 3, L * 0.53,
+                    0, L - 5,
+                    -w / 2 + 3, L * 0.53
+                  ]}
+                  closed={true}
+                  fill={boat.stripe + '15'}
+                  stroke={boat.stripe}
+                  strokeWidth={1}
+                />
+
+                {/* Type-Specific Boat Visual Details */}
+                {boat.type === 'yacht' && (
+                  <Group>
+                    {/* Main deck cabin box */}
+                    <Rect
+                      x={-w / 2 + 4}
+                      y={L * 0.15}
+                      width={w - 8}
+                      height={L * 0.35}
+                      fill="#f8fafc"
+                      stroke="#64748b"
+                      strokeWidth={1}
+                      cornerRadius={3}
+                    />
+                    {/* Windshield console (dark glass) */}
+                    <Rect
+                      x={-w / 2 + 6}
+                      y={L * 0.22}
+                      width={w - 12}
+                      height={L * 0.12}
+                      fill="#0f172a"
+                      opacity={0.8}
+                      cornerRadius={1}
+                    />
+                    {/* Foredeck Bow cushion sunpad */}
+                    <Rect
+                      x={-w / 4}
+                      y={L * 0.55}
+                      width={w / 2}
+                      height={L * 0.08}
+                      fill={boat.stripe}
+                      cornerRadius={1.5}
+                      opacity={0.85}
+                    />
+                  </Group>
+                )}
+
+                {boat.type === 'sailboat' && (
+                  <Group>
+                    {/* Cabin trunk */}
+                    <Rect
+                      x={-w / 2 + 4}
+                      y={L * 0.2}
+                      width={w - 8}
+                      height={L * 0.35}
+                      fill="#f8fafc"
+                      stroke="#64748b"
+                      strokeWidth={1}
+                      cornerRadius={2}
+                    />
+                    {/* Mast Centerpiece */}
+                    <Circle
+                      x={0}
+                      y={L * 0.38}
+                      radius={3.5}
+                      fill="#cbd5e1"
+                      stroke="#475569"
+                      strokeWidth={1}
+                    />
+                    {/* Mast Sail Cover line */}
+                    <Line
+                      points={[0, L * 0.1, 0, L * 0.38]}
+                      stroke={boat.stripe}
+                      strokeWidth={2.8}
+                      lineCap="round"
+                    />
+                    {/* Rigging cables */}
+                    <Line
+                      points={[-w / 2 + 5, L * 0.38, 0, L * 0.38, w / 2 - 5, L * 0.38]}
+                      stroke="#64748b"
+                      strokeWidth={0.8}
+                      opacity={0.6}
+                    />
+                  </Group>
+                )}
+
+                {boat.type === 'speedboat' && (
+                  <Group>
+                    {/* Cockpit opening */}
+                    <Rect
+                      x={-w / 2 + 4}
+                      y={L * 0.18}
+                      width={w - 8}
+                      height={L * 0.32}
+                      fill="#1e293b"
+                      cornerRadius={2}
+                    />
+                    {/* Helm seats */}
+                    <Rect
+                      x={-w / 2 + 6}
+                      y={L * 0.22}
+                      width={w / 2 - 7}
+                      height={L * 0.09}
+                      fill="#ffffff"
+                      cornerRadius={0.5}
+                    />
+                    <Rect
+                      x={1}
+                      y={L * 0.22}
+                      width={w / 2 - 7}
+                      height={L * 0.09}
+                      fill="#ffffff"
+                      cornerRadius={0.5}
+                    />
+                    {/* Windshield profile */}
+                    <Line
+                      points={[
+                        -w / 2 + 4, L * 0.32,
+                        -w / 2 + 6, L * 0.35,
+                        w / 2 - 6, L * 0.35,
+                        w / 2 - 4, L * 0.32
+                      ]}
+                      stroke="#38bdf8"
+                      strokeWidth={1.5}
+                      opacity={0.85}
+                    />
+                  </Group>
+                )}
+              </Group>
+            );
+          })}
+
+          {/* 5. Elegant Brass-Bordered BAR Overlay */}
           <Group x={30} y={35}>
             <Rect
               width={277}
               height={55}
-              fill="#fae8ff"
-              stroke="#d946ef"
+              fill="#fdfbf7"
+              stroke="#c5a86c"
               strokeWidth={2}
-              cornerRadius={6}
-              shadowBlur={3}
-              shadowColor="rgba(217, 70, 239, 0.1)"
+              cornerRadius={8}
+              shadowBlur={8}
+              shadowColor="rgba(197, 168, 108, 0.15)"
             />
             <Text
-              text="BAR"
+              text="TEAKWOOD BAR & LOUNGE"
               width={277}
               y={20}
-              fontSize={14}
+              fontSize={11}
               fontFamily="Inter, system-ui"
-              fill="#a21caf"
+              fill="#8d6e35"
               align="center"
               fontStyle="bold"
-            />
-          </Group>
-
-          {/* Static Decorative DOCKSIDE Ellipse Shoreline */}
-          <Group x={170} y={430}>
-            <Ellipse
-              radiusX={130}
-              radiusY={30}
-              fill="#dcfce7"
-              stroke="#16a34a"
-              strokeWidth={2}
-              shadowBlur={3}
-              shadowColor="rgba(22, 163, 74, 0.1)"
-            />
-            <Text
-              text="DOCKSIDE"
-              x={-130}
-              y={-7}
-              width={260}
-              fontSize={14}
-              fontFamily="Inter, system-ui"
-              fill="#15803d"
-              align="center"
-              fontStyle="bold"
+              letterSpacing={2}
             />
           </Group>
 
