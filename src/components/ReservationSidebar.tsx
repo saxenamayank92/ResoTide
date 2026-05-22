@@ -5,7 +5,8 @@ import { useTableTide } from '../context/TableTideContext';
 import { Reservation, ReservationStatus } from '../types';
 import { 
   Calendar, Plus, Trash2, CheckCircle2, User, Clock, 
-  Users, ChevronLeft, ChevronRight, X, Sparkles, BookOpen, AlertTriangle
+  Users, ChevronLeft, ChevronRight, X, Sparkles, BookOpen, AlertTriangle,
+  PanelLeftClose, PanelLeftOpen, Timer, Ban, Armchair
 } from 'lucide-react';
 import canvasConfetti from 'canvas-confetti';
 import Link from 'next/link';
@@ -28,6 +29,7 @@ export default function ReservationSidebar() {
 
   // Local component states
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Periodic tick to force re-render of active timers every 10 seconds
   const [tick, setTick] = useState(0);
@@ -102,27 +104,62 @@ export default function ReservationSidebar() {
   // Filter reservations for the active day
   const dayReservations = reservations.filter((r) => r.date === activeDate);
 
-  // Status transition handler
-  const handleStatusCycle = (res: Reservation) => {
-    const statusSequence: ReservationStatus[] = ['Pending', 'Seated', 'Completed'];
-    const currentIndex = statusSequence.indexOf(res.status);
-    const nextStatus = statusSequence[(currentIndex + 1) % statusSequence.length];
-    
-    updateReservation(res.id, { status: nextStatus });
+  // ==========================================
+  // COLLAPSED SIDEBAR VIEW
+  // ==========================================
+  if (isSidebarCollapsed) {
+    return (
+      <div className="w-[56px] flex flex-col h-full bg-white border-r border-zinc-200 shadow-sm z-10 items-center py-4 gap-4 transition-all duration-300">
+        {/* Expand Toggle */}
+        <button
+          onClick={() => setIsSidebarCollapsed(false)}
+          className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-800 transition"
+          title="Expand Reservations"
+        >
+          <PanelLeftOpen className="w-5 h-5" />
+        </button>
 
-    // Confetti effect on completion!
-    if (nextStatus === 'Completed') {
-      canvasConfetti({
-        particleCount: 80,
-        spread: 60,
-        origin: { y: 0.8 },
-        colors: ['#15803d', '#d97706', '#1d4ed8'],
-      });
-    }
-  };
+        {/* Oakville Crest */}
+        <img 
+          src="/oakville_club_logo.svg" 
+          alt="Oakville Club" 
+          className="w-8 h-8 object-contain opacity-60"
+        />
 
+        {/* Booking Count Badge */}
+        <div className="flex flex-col items-center gap-0.5">
+          <div className="w-8 h-8 rounded-full bg-slate-100 border border-zinc-200 flex items-center justify-center text-xs font-black text-slate-800">
+            {dayReservations.length}
+          </div>
+          <span className="text-[7px] text-slate-400 font-bold uppercase tracking-wider">Books</span>
+        </div>
+
+        {/* Active Covers Badge */}
+        <div className="flex flex-col items-center gap-0.5">
+          <div className="w-8 h-8 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-xs font-black text-emerald-800">
+            {dayReservations.filter(r => r.status === 'Seated').length}
+          </div>
+          <span className="text-[7px] text-emerald-500 font-bold uppercase tracking-wider">Seated</span>
+        </div>
+
+        {/* Delayed Count */}
+        {dayReservations.filter(r => r.status === 'Delayed').length > 0 && (
+          <div className="flex flex-col items-center gap-0.5">
+            <div className="w-8 h-8 rounded-full bg-amber-50 border border-amber-300 flex items-center justify-center text-xs font-black text-amber-800 animate-pulse">
+              {dayReservations.filter(r => r.status === 'Delayed').length}
+            </div>
+            <span className="text-[7px] text-amber-500 font-bold uppercase tracking-wider">Delay</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ==========================================
+  // EXPANDED SIDEBAR VIEW
+  // ==========================================
   return (
-    <div className="w-full lg:w-[420px] flex flex-col h-full bg-white border-r border-zinc-200 shadow-sm z-10">
+    <div className="w-full lg:w-[420px] flex flex-col h-full bg-white border-r border-zinc-200 shadow-sm z-10 transition-all duration-300">
       
       {/* 1. BRAND HEADER (Oakville Crest Embedded) */}
       <div className="p-5 border-b border-zinc-200 flex items-center justify-between bg-slate-50/50">
@@ -138,22 +175,33 @@ export default function ReservationSidebar() {
           </div>
         </div>
         
-        {/* Date Navigator */}
-        <div className="flex items-center gap-1 bg-slate-100 border border-zinc-200 rounded-lg p-1">
-          <button 
-            onClick={() => handleShiftDate(-1)} 
-            className="p-1 hover:bg-slate-200 rounded text-slate-500 hover:text-slate-800 transition"
+        <div className="flex items-center gap-2">
+          {/* Date Navigator */}
+          <div className="flex items-center gap-1 bg-slate-100 border border-zinc-200 rounded-lg p-1">
+            <button 
+              onClick={() => handleShiftDate(-1)} 
+              className="p-1 hover:bg-slate-200 rounded text-slate-500 hover:text-slate-800 transition"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="text-xs font-bold px-2 text-slate-700 min-w-[90px] text-center">
+              {formatDisplayDate(activeDate)}
+            </span>
+            <button 
+              onClick={() => handleShiftDate(1)} 
+              className="p-1 hover:bg-slate-200 rounded text-slate-500 hover:text-slate-800 transition"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Collapse Toggle */}
+          <button
+            onClick={() => setIsSidebarCollapsed(true)}
+            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-700 transition"
+            title="Collapse Sidebar"
           >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <span className="text-xs font-bold px-2 text-slate-700 min-w-[90px] text-center">
-            {formatDisplayDate(activeDate)}
-          </span>
-          <button 
-            onClick={() => handleShiftDate(1)} 
-            className="p-1 hover:bg-slate-200 rounded text-slate-500 hover:text-slate-800 transition"
-          >
-            <ChevronRight className="w-4 h-4" />
+            <PanelLeftClose className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -351,8 +399,10 @@ export default function ReservationSidebar() {
             const isAssigned = res.tableId !== null;
             const assignedName = getAssignedName(res.tableId);
             const isCurrentAssignee = activeReservationId === res.id;
+            const isCancelled = res.status === 'Cancelled';
+            const isDelayed = res.status === 'Delayed';
 
-            // Calculate elapsed time for red warning status (1 hour 45 minutes)
+            // Calculate elapsed time for seated red warning status (1 hour 45 minutes)
             let isWarning = false;
             let timerLabel = '';
             if (res.status === 'Seated' && res.seatedAtTimestamp) {
@@ -371,17 +421,33 @@ export default function ReservationSidebar() {
               }
             }
 
+            // Calculate delay count-up timer
+            let delayTimerLabel = '';
+            if (isDelayed && res.delayedAtTimestamp) {
+              const elapsed = Math.floor((Date.now() - res.delayedAtTimestamp) / 60000);
+              const hrs = Math.floor(elapsed / 60);
+              const mins = elapsed % 60;
+              delayTimerLabel = hrs > 0 ? `${hrs}h ${String(mins).padStart(2, '0')}m` : `${mins}m`;
+            }
+
             // Visual mapping based on Statuses
             let statusStyle = 'bg-slate-100 border border-zinc-300 text-slate-600';
             let cardBorderClass = 'border-zinc-200 hover:border-zinc-350 shadow-sm';
             let glowAccent = '';
 
-            if (res.status === 'Pending') {
+            if (isCancelled) {
+              statusStyle = 'bg-slate-100 text-slate-400 border-zinc-200 line-through';
+              cardBorderClass = 'border-zinc-200 opacity-50 bg-slate-50/50 shadow-none';
+            } else if (res.status === 'Pending') {
               statusStyle = 'bg-amber-50 text-amber-700 border-amber-600/30';
               cardBorderClass = isAssigned 
                 ? 'border-amber-600/40 hover:border-amber-600/60' 
                 : 'border-zinc-200';
               if (isAssigned) glowAccent = 'glow-gold';
+            } else if (isDelayed) {
+              statusStyle = 'bg-orange-50 text-orange-700 border-orange-500/30 animate-pulse';
+              cardBorderClass = 'border-orange-500/40 hover:border-orange-500/60 shadow-sm shadow-orange-100';
+              glowAccent = 'glow-gold';
             } else if (res.status === 'Seated') {
               if (isWarning) {
                 statusStyle = 'bg-rose-50 text-rose-700 border-rose-600/30 animate-pulse font-extrabold';
@@ -410,6 +476,8 @@ export default function ReservationSidebar() {
                 <div className="absolute left-0 top-0 bottom-0 w-[4px] bg-slate-300"
                   style={{
                     backgroundColor: 
+                      isCancelled ? '#94a3b8' :
+                      isDelayed ? '#ea580c' :
                       res.status === 'Pending' && isAssigned ? '#d97706' :
                       res.status === 'Seated' ? (isWarning ? '#dc2626' : '#15803d') : 
                       res.status === 'Completed' ? '#64748b' : '#cbd5e1'
@@ -420,7 +488,9 @@ export default function ReservationSidebar() {
                 <div className="flex items-start justify-between">
                   <div className="pl-1.5">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-extrabold text-slate-900 tracking-tight text-md">{res.guestName}</span>
+                      <span className={`font-extrabold tracking-tight text-md ${isCancelled ? 'line-through text-slate-400' : 'text-slate-900'}`}>
+                        {res.guestName}
+                      </span>
                     </div>
                     
                     {/* Time, Pax icons row */}
@@ -431,11 +501,20 @@ export default function ReservationSidebar() {
                       <span className="flex items-center gap-1 text-[11px]">
                         <Clock className="w-3.5 h-3.5 text-slate-400" /> {res.time}
                       </span>
+
+                      {/* Seated countdown timer */}
                       {res.status === 'Seated' && timerLabel && (
                         <span className={`flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded font-black tracking-tight ${
                           isWarning ? 'bg-rose-100 text-rose-800 animate-pulse' : 'bg-emerald-100 text-emerald-800'
                         }`}>
                           <Clock className="w-3 h-3" /> {timerLabel}
+                        </span>
+                      )}
+
+                      {/* Delayed count-up timer */}
+                      {isDelayed && delayTimerLabel && (
+                        <span className="flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded font-black tracking-tight bg-orange-100 text-orange-800 animate-pulse">
+                          <Timer className="w-3 h-3" /> {delayTimerLabel}
                         </span>
                       )}
                     </div>
@@ -452,7 +531,7 @@ export default function ReservationSidebar() {
 
                 {/* Dietary Notes Display */}
                 {res.notes && (
-                  <div className="mx-1.5 p-2 bg-slate-50 border border-zinc-200 rounded-lg text-xs text-slate-600 leading-relaxed font-bold">
+                  <div className={`mx-1.5 p-2 bg-slate-50 border border-zinc-200 rounded-lg text-xs leading-relaxed font-bold ${isCancelled ? 'text-slate-400' : 'text-slate-600'}`}>
                     {res.notes}
                   </div>
                 )}
@@ -463,16 +542,20 @@ export default function ReservationSidebar() {
                   {/* Table Assignment Trigger */}
                   <div className="flex items-center gap-1 text-xs">
                     {isAssigned ? (
-                      <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-600/30 text-amber-800 py-1 px-2.5 rounded-lg font-bold animate-fadeIn">
+                      <div className={`flex items-center gap-1.5 py-1 px-2.5 rounded-lg font-bold animate-fadeIn ${
+                        isCancelled ? 'bg-slate-100 border border-zinc-200 text-slate-400' : 'bg-amber-50 border border-amber-600/30 text-amber-800'
+                      }`}>
                         <span>Table {assignedName}</span>
-                        <button 
-                          onClick={() => updateReservation(res.id, { tableId: null })}
-                          className="hover:bg-slate-200 rounded-full p-0.5 transition"
-                        >
-                          <X className="w-3 h-3 text-amber-600 hover:text-amber-900" />
-                        </button>
+                        {!isCancelled && (
+                          <button 
+                            onClick={() => updateReservation(res.id, { tableId: null })}
+                            className="hover:bg-slate-200 rounded-full p-0.5 transition"
+                          >
+                            <X className="w-3 h-3 text-amber-600 hover:text-amber-900" />
+                          </button>
+                        )}
                       </div>
-                    ) : (
+                    ) : !isCancelled ? (
                       <button
                         onClick={() => {
                           if (isCurrentAssignee) {
@@ -489,16 +572,94 @@ export default function ReservationSidebar() {
                       >
                         {isCurrentAssignee ? 'Assigning...' : 'Assign Table'}
                       </button>
-                    )}
+                    ) : null}
                   </div>
 
-                  {/* Status Button Toggle */}
-                  <button
-                    onClick={() => handleStatusCycle(res)}
-                    className={`text-[10px] font-black py-1.5 px-3 rounded-lg border transition uppercase tracking-wider ${statusStyle}`}
-                  >
-                    {res.status}
-                  </button>
+                  {/* ======================================== */}
+                  {/* STATUS ACTION BUTTONS                    */}
+                  {/* ======================================== */}
+                  
+                  {/* Pending + Assigned → Show Seat / Delay / Cancel buttons */}
+                  {res.status === 'Pending' && isAssigned && (
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => {
+                          updateReservation(res.id, { status: 'Seated' });
+                          canvasConfetti({ particleCount: 50, spread: 40, origin: { y: 0.8 }, colors: ['#10b981', '#059669', '#34d399'] });
+                        }}
+                        className="flex items-center gap-1 text-[10px] font-black py-1.5 px-2.5 rounded-lg border bg-emerald-50 hover:bg-emerald-100 border-emerald-600/30 text-emerald-800 transition uppercase tracking-wider"
+                      >
+                        <Armchair className="w-3 h-3" /> Seat
+                      </button>
+                      <button
+                        onClick={() => updateReservation(res.id, { status: 'Delayed' })}
+                        className="flex items-center gap-1 text-[10px] font-black py-1.5 px-2.5 rounded-lg border bg-orange-50 hover:bg-orange-100 border-orange-500/30 text-orange-800 transition uppercase tracking-wider"
+                      >
+                        <Timer className="w-3 h-3" /> Delay
+                      </button>
+                      <button
+                        onClick={() => updateReservation(res.id, { status: 'Cancelled' })}
+                        className="flex items-center gap-1 text-[10px] font-black py-1.5 px-2.5 rounded-lg border bg-rose-50 hover:bg-rose-100 border-rose-500/30 text-rose-700 transition uppercase tracking-wider"
+                      >
+                        <Ban className="w-3 h-3" /> Cancel
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Pending + NOT assigned → show Pending badge */}
+                  {res.status === 'Pending' && !isAssigned && (
+                    <span className={`text-[10px] font-black py-1.5 px-3 rounded-lg border uppercase tracking-wider ${statusStyle}`}>
+                      Pending
+                    </span>
+                  )}
+
+                  {/* Delayed → Show Seat Now + Cancel buttons */}
+                  {isDelayed && (
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => {
+                          updateReservation(res.id, { status: 'Seated' });
+                          canvasConfetti({ particleCount: 50, spread: 40, origin: { y: 0.8 }, colors: ['#10b981', '#059669', '#34d399'] });
+                        }}
+                        className="flex items-center gap-1 text-[10px] font-black py-1.5 px-2.5 rounded-lg border bg-emerald-50 hover:bg-emerald-100 border-emerald-600/30 text-emerald-800 transition uppercase tracking-wider"
+                      >
+                        <Armchair className="w-3 h-3" /> Seat Now
+                      </button>
+                      <button
+                        onClick={() => updateReservation(res.id, { status: 'Cancelled' })}
+                        className="flex items-center gap-1 text-[10px] font-black py-1.5 px-2.5 rounded-lg border bg-rose-50 hover:bg-rose-100 border-rose-500/30 text-rose-700 transition uppercase tracking-wider"
+                      >
+                        <Ban className="w-3 h-3" /> Cancel
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Seated → Show Complete button */}
+                  {res.status === 'Seated' && (
+                    <button
+                      onClick={() => {
+                        updateReservation(res.id, { status: 'Completed' });
+                        canvasConfetti({ particleCount: 80, spread: 60, origin: { y: 0.8 }, colors: ['#15803d', '#d97706', '#1d4ed8'] });
+                      }}
+                      className="flex items-center gap-1 text-[10px] font-black py-1.5 px-2.5 rounded-lg border bg-slate-100 hover:bg-slate-200 border-zinc-300 text-slate-700 transition uppercase tracking-wider"
+                    >
+                      <CheckCircle2 className="w-3 h-3" /> Complete
+                    </button>
+                  )}
+
+                  {/* Completed → Show badge */}
+                  {res.status === 'Completed' && (
+                    <span className={`text-[10px] font-black py-1.5 px-3 rounded-lg border uppercase tracking-wider ${statusStyle}`}>
+                      Completed
+                    </span>
+                  )}
+
+                  {/* Cancelled → Show badge */}
+                  {isCancelled && (
+                    <span className="text-[10px] font-black py-1.5 px-3 rounded-lg border bg-slate-100 border-zinc-200 text-slate-400 uppercase tracking-wider line-through">
+                      Cancelled
+                    </span>
+                  )}
                 </div>
               </div>
             );

@@ -294,11 +294,23 @@ export const TableTideProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       prev.map((r) => {
         if (r.id === id) {
           const merged = { ...r, ...updates };
-          if (updates.status === 'Seated' && !r.seatedAtTimestamp) {
+
+          // Seated: always (re)set the seated timestamp so the 2h countdown starts fresh
+          if (updates.status === 'Seated') {
             merged.seatedAtTimestamp = Date.now();
-          } else if (updates.status && updates.status !== 'Seated') {
+            delete merged.delayedAtTimestamp;
+          }
+          // Delayed: set the delayed timestamp for the count-up timer
+          else if (updates.status === 'Delayed') {
+            merged.delayedAtTimestamp = Date.now();
             delete merged.seatedAtTimestamp;
           }
+          // Any other status (Pending / Completed / Cancelled): clear both timestamps
+          else if (updates.status) {
+            delete merged.seatedAtTimestamp;
+            delete merged.delayedAtTimestamp;
+          }
+
           return merged;
         }
         return r;

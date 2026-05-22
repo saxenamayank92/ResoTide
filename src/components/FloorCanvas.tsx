@@ -150,12 +150,23 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
     let guestTextColor = '#1d4ed8'; // Royal Blue for active guest assignments
 
     if (res) {
-      if (res.status === 'Pending') {
+      if (res.status === 'Cancelled') {
+        fill = '#f1f5f9'; // Light grey
+        stroke = '#94a3b8'; // Muted grey border
+        textColor = '#94a3b8';
+        guestTextColor = '#94a3b8';
+      } else if (res.status === 'Pending') {
         fill = '#fffbeb'; // Soft Amber background
         stroke = '#d97706'; // Strong Amber Gold border
         shadowColor = 'rgba(217, 119, 6, 0.2)';
         textColor = '#92400e';
         guestTextColor = '#0f172a';
+      } else if (res.status === 'Delayed') {
+        fill = '#fff7ed'; // Soft Orange background
+        stroke = '#ea580c'; // Bold Orange border
+        shadowColor = 'rgba(234, 88, 12, 0.35)';
+        textColor = '#9a3412';
+        guestTextColor = '#7c2d12';
       } else if (res.status === 'Seated') {
         // Calculate elapsed time for red warning status (1 hour 45 minutes)
         const elapsed = res.seatedAtTimestamp ? Math.floor((Date.now() - res.seatedAtTimestamp) / 60000) : 0;
@@ -770,8 +781,8 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
                 <Group
                   x={0}
                   y={isCircle 
-                    ? table.width / 2 - (res ? (res.status === 'Seated' ? 32 : 26) : 18) 
-                    : table.height / 2 - (res ? (res.status === 'Seated' ? 32 : 26) : 18)
+                    ? table.width / 2 - (res ? (res.status === 'Seated' || res.status === 'Delayed' ? 32 : 26) : 18) 
+                    : table.height / 2 - (res ? (res.status === 'Seated' || res.status === 'Delayed' ? 32 : 26) : 18)
                   }
                   width={table.width}
                 >
@@ -781,7 +792,7 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
                     width={table.width}
                     fontSize={isCircle ? 15 : 16}
                     fontFamily="Inter, system-ui"
-                    fill={res?.status === 'Completed' ? '#94a3b8' : '#0f172a'}
+                    fill={res?.status === 'Completed' || res?.status === 'Cancelled' ? '#94a3b8' : '#0f172a'}
                     align="center"
                     fontStyle="bold"
                   />
@@ -806,7 +817,7 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
                       y={isCircle ? 32 : 36}
                       fontSize={isCircle ? 11 : 12}
                       fontFamily="Inter, system-ui"
-                      fill={res.status === 'Seated' && res.seatedAtTimestamp && Math.floor((Date.now() - res.seatedAtTimestamp) / 60000) >= 105 ? '#991b1b' : '#0f172a'}
+                      fill={res.status === 'Cancelled' ? '#94a3b8' : res.status === 'Delayed' ? '#ea580c' : res.status === 'Seated' && res.seatedAtTimestamp && Math.floor((Date.now() - res.seatedAtTimestamp) / 60000) >= 105 ? '#991b1b' : '#0f172a'}
                       align="center"
                       fontStyle="bold"
                       ellipsis={true}
@@ -838,6 +849,27 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
                         fontSize={isCircle ? 9 : 10}
                         fontFamily="Inter, system-ui"
                         fill={isWarning ? '#dc2626' : '#16a34a'}
+                        align="center"
+                        fontStyle="bold"
+                      />
+                    );
+                  })()}
+
+                  {/* Delayed count-up timer */}
+                  {res && res.status === 'Delayed' && res.delayedAtTimestamp && (() => {
+                    const elapsed = Math.floor((Date.now() - res.delayedAtTimestamp) / 60000);
+                    const hrs = Math.floor(elapsed / 60);
+                    const mins = elapsed % 60;
+                    const tText = hrs > 0 ? `${hrs}h ${String(mins).padStart(2, '0')}m` : `${mins}m`;
+
+                    return (
+                      <Text
+                        text={`⏳ ${tText}`}
+                        width={table.width}
+                        y={isCircle ? 44 : 50}
+                        fontSize={isCircle ? 9 : 10}
+                        fontFamily="Inter, system-ui"
+                        fill="#ea580c"
                         align="center"
                         fontStyle="bold"
                       />

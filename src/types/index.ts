@@ -20,7 +20,7 @@ export interface JoinedGroup {
   capacity: number;
 }
 
-export type ReservationStatus = 'Pending' | 'Seated' | 'Completed';
+export type ReservationStatus = 'Pending' | 'Seated' | 'Completed' | 'Cancelled' | 'Delayed';
 
 export interface Reservation {
   id: string;
@@ -32,5 +32,5 @@ export interface Reservation {
   notes: string;
   date: string; // YYYY-MM-DD
   seatedAtTimestamp?: number; // millisecond timestamp when reservation was seated
+  delayedAtTimestamp?: number; // millisecond timestamp when reservation was marked as delayed
 }
-

@@ -59,8 +59,8 @@ function DashboardContent() {
         <Navbar />
         
         {/* Dotted Grid Viewport Area */}
-        <div className="flex-1 p-6 overflow-auto bg-[#f8fafc] flex items-center justify-center">
-          <div className="w-full max-w-5xl h-full flex flex-col justify-center">
+        <div className="flex-1 p-3 overflow-auto bg-[#f8fafc] flex items-center justify-center">
+          <div className="w-full h-full flex flex-col justify-center">
             <FloorCanvas />
             
             {/* Live Canvas Footer Helper */}
@@ -74,6 +74,9 @@ function DashboardContent() {
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded-full border-2 border-emerald-600 bg-[#f0fdf4]"></span> Seated
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-full border-2 border-orange-500 bg-[#fff7ed]"></span> Delayed
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded-full border-2 border-slate-300 bg-[#f1f5f9]"></span> Completed
