@@ -105,14 +105,16 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
       const parentWidth = rect.width;
+      const parentHeight = rect.height;
       
-      // Calculate responsive ratio relative to base coordinate width (1380px)
-      const paddedWidth = Math.max(300, parentWidth - 32);
-      const newScale = paddedWidth / 1380;
+      // Calculate responsive ratio relative to base coordinate width (1380px) and height (850px)
+      const scaleX = parentWidth / 1380;
+      const scaleY = parentHeight / 850;
+      const newScale = Math.min(scaleX, scaleY);
       
       setScale(newScale);
       setDimensions({
-        width: paddedWidth,
+        width: 1380 * newScale,
         height: 850 * newScale,
       });
     };
@@ -348,7 +350,7 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
   };
 
   return (
-    <div ref={containerRef} className="relative w-full h-full min-h-[850px] flex items-center justify-center overflow-auto rounded-xl border border-zinc-200 bg-[#faf6f0] p-4 no-select shadow-sm">
+    <div ref={containerRef} className="relative w-full h-full flex items-center justify-center overflow-hidden bg-[#faf6f0] no-select">
       <Stage
         width={dimensions.width}
         height={dimensions.height}

@@ -59,12 +59,14 @@ function DashboardContent() {
         <Navbar />
         
         {/* Dotted Grid Viewport Area */}
-        <div className="flex-1 p-3 overflow-auto bg-[#f8fafc] flex items-center justify-center">
-          <div className="w-full h-full flex flex-col justify-center">
-            <FloorCanvas />
+        <div className="flex-1 p-0 overflow-hidden bg-[#faf6f0] flex flex-col">
+          <div className="flex-1 w-full h-full min-h-0 flex flex-col justify-between">
+            <div className="flex-1 min-h-0 w-full h-full relative">
+              <FloorCanvas />
+            </div>
             
             {/* Live Canvas Footer Helper */}
-            <div className="mt-3 flex items-center justify-between text-[11px] text-slate-500 px-1 font-mono uppercase tracking-wider font-bold">
+            <div className="bg-[#faf6f0] border-t border-zinc-200/80 px-6 py-2.5 flex items-center justify-between text-[11px] text-slate-500 font-mono uppercase tracking-wider font-bold">
               <div className="flex gap-4">
                 <span className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded-full border-2 border-slate-700 bg-white"></span> Available
