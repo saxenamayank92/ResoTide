@@ -81,18 +81,7 @@ export default function FloorCanvas({ readOnly = false }: FloorCanvasProps) {
     }
   }, [activeTableModal, joinedGroups]);
 
-  const [animationTime, setAnimationTime] = useState(0);
-
-  // Smooth animation frame loop for undulating waves and bobbing yachts
-  useEffect(() => {
-    let animId: number;
-    const updateAnimation = () => {
-      setAnimationTime((prev) => (prev + 0.015) % (Math.PI * 4));
-      animId = requestAnimationFrame(updateAnimation);
-    };
-    animId = requestAnimationFrame(updateAnimation);
-    return () => cancelAnimationFrame(animId);
-  }, []);
+  const animationTime = 0;
 
   // Fluid responsive stage variables relative to the 1380px baseline coordinate blueprint (extended to 850px for dock and deep lakefront)
   const [dimensions, setDimensions] = useState({ width: 1380, height: 850 });
